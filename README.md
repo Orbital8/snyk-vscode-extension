@@ -1,5 +1,10 @@
 # Visual Studio Code extension
 
+> [!NOTE]
+> This fork exists to add inline ignore support for individual **Snyk Code** findings in the VS Code extension.
+> Findings can be ignored directly in source files with comments such as `snyk:ignore:<issue title>`, and the matching behavior is intended to align as closely as possible with [adrianosela/snyk_code_ignore](https://github.com/adrianosela/snyk_code_ignore).
+> The ignore applies to matching Snyk Code issue instances only, including support for same-line comments and standalone comments on the line above.
+
 ## **Scan early, fix as you develop: elevate your security posture**
 
 Integrating security checks early in your development lifecycle helps you pass security reviews seamlessly and avoid expensive fixes down the line.

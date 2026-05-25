@@ -38,6 +38,7 @@ export type IgnoreIssueMessage = {
     lineOnly: boolean;
     message: string;
     rule: string;
+    title: string;
     uri: string;
     cols: [number, number];
     rows: [number, number];

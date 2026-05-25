@@ -8,6 +8,7 @@ import { ProductResult } from '../../common/services/productService';
 import { ICodeActionAdapter, ICodeActionKindAdapter } from '../../common/vscode/codeAction';
 import { IVSCodeLanguages } from '../../common/vscode/languages';
 import { FILE_IGNORE_ACTION_NAME, IGNORE_ISSUE_ACTION_NAME } from '../constants/analysis';
+import { getInlineIgnoreCommentTitle } from '../utils/analysisUtils';
 import { IssueUtils } from '../utils/issueUtils';
 import { CodeIssueCommandArg } from '../views/interfaces';
 import { IConfiguration } from '../../common/configuration/configuration';
@@ -62,7 +63,15 @@ export class SnykCodeActionsProvider extends CodeActionsProvider<CodeIssueData> 
     ignoreAction.command = {
       command: SNYK_IGNORE_ISSUE_COMMAND,
       title: SNYK_IGNORE_ISSUE_COMMAND,
-      arguments: [{ uri: document.uri, matchedIssue, ruleId, isFileIgnore }],
+      arguments: [
+        {
+          uri: document.uri,
+          matchedIssue,
+          ruleId: isFileIgnore ? ruleId : undefined,
+          issueTitle: isFileIgnore ? undefined : getInlineIgnoreCommentTitle(issue.title),
+          isFileIgnore,
+        },
+      ],
     };
 
     return ignoreAction;

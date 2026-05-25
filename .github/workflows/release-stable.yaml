@@ -26,12 +26,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
 
       - name: Setup VSCE
         run: sudo npm install -g vsce@latest
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Get Next Version
         id: semver
@@ -73,7 +79,7 @@ jobs:
         run: |
           VERSION=$(echo ${{ steps.semver.outputs.next }} | sed 's/^v//')
           echo y | vsce package --no-git-tag-version --no-update-package-json $VERSION
-          npx ovsx publish -i snyk-vulnerability-scanner-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
+          pnpm dlx ovsx publish -i snyk-vulnerability-scanner-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
 
       - name: Clean up credentials
         if: always()

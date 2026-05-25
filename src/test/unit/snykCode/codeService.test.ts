@@ -16,11 +16,13 @@ import { LanguageServerMock } from '../mocks/languageServer.mock';
 import { LanguagesMock } from '../mocks/languages.mock';
 import { LoggerMock } from '../mocks/logger.mock';
 import { IDiagnosticsIssueProvider } from '../../../snyk/common/services/diagnosticsService';
+import { makeMockCodeIssue } from '../mocks/issue.mock';
 
 suite('Code Service', () => {
   let ls: ILanguageServer;
   let service: IProductService<CodeIssueData>;
   let refreshViewFake: sinon.SinonSpy;
+  let diagnosticsIssueProvider: IDiagnosticsIssueProvider<CodeIssueData>;
 
   setup(() => {
     ls = new LanguageServerMock();
@@ -29,6 +31,11 @@ suite('Code Service', () => {
     const viewManagerService = {
       refreshAllCodeAnalysisViews: refreshViewFake,
     } as unknown as IViewManagerService;
+
+    diagnosticsIssueProvider = {
+      getIssuesFromDiagnostics: () => [],
+      getIssuesFromDiagnosticsForFolder: () => [],
+    } as IDiagnosticsIssueProvider<CodeIssueData>;
 
     service = new SnykCodeService(
       {} as ExtensionContext,
@@ -45,7 +52,7 @@ suite('Code Service', () => {
       new WorkspaceTrust(),
       ls,
       new LanguagesMock(),
-      {} as IDiagnosticsIssueProvider<CodeIssueData>,
+      diagnosticsIssueProvider,
       new LoggerMock(),
       {} as IFolderConfigs,
     );
@@ -64,5 +71,24 @@ suite('Code Service', () => {
 
     strictEqual(service.isAnalysisRunning, false);
     sinon.assert.notCalled(refreshViewFake);
+  });
+
+  test('Stores only diagnostics provider results for downstream views after a successful Code scan', () => {
+    const visibleIssue = makeMockCodeIssue({ id: 'visible-issue' });
+    diagnosticsIssueProvider.getIssuesFromDiagnosticsForFolder = () => [visibleIssue];
+
+    ls.scan$.next({
+      product: ScanProduct.Code,
+      folderPath: 'test/path',
+      status: ScanStatus.InProgress,
+    });
+    ls.scan$.next({
+      product: ScanProduct.Code,
+      folderPath: 'test/path',
+      status: ScanStatus.Success,
+    });
+
+    strictEqual(service.getIssue('test/path', 'visible-issue')?.id, 'visible-issue');
+    strictEqual(service.getIssueById('hidden-issue'), undefined);
   });
 });

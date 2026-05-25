@@ -1,6 +1,7 @@
 import { IConfiguration } from '../configuration/configuration';
 import { SNYK_OPEN_LOCAL_COMMAND } from '../constants/commands';
 import { ILog } from '../logger/interfaces';
+import { CodeIssueData, Issue, LsScanProduct, ScanProduct, ShowIssueDetailTopicParams, SnykURIAction } from './types';
 import { productToLsProduct } from '../services/mappings';
 import { isEnumStringValueOf, isThenable } from '../tsUtil';
 import { User } from '../user';
@@ -9,17 +10,19 @@ import type {
   CancellationToken,
   ConfigurationParams,
   ConfigurationRequestHandlerSignature,
+  Diagnostic,
   Middleware,
   ResponseError,
   ShowDocumentParams,
   ShowDocumentResult,
+  Uri,
   WindowMiddleware,
   WorkspaceMiddleware,
 } from '../vscode/types';
 import { IUriAdapter } from '../vscode/uri';
 import { LanguageServerSettings, ServerSettings } from './settings';
-import { LsScanProduct, ScanProduct, ShowIssueDetailTopicParams, SnykURIAction } from './types';
 import { Subject } from 'rxjs';
+import { isSnykCodeIssueInlineIgnoredInFile } from '../../snykCode/utils/inlineIgnore';
 
 type LanguageClientWorkspaceMiddleware = Partial<WorkspaceMiddleware> & {
   configuration: (
@@ -119,5 +122,22 @@ export class LanguageClientMiddleware implements Middleware {
 
       return { success: true };
     },
+  };
+
+  handleDiagnostics = (uri: Uri, diagnostics: Diagnostic[], next: (uri: Uri, diagnostics: Diagnostic[]) => void): void => {
+    const filteredDiagnostics = diagnostics.filter(diagnostic => {
+      if (diagnostic.source !== LsScanProduct.Code || !Object.prototype.hasOwnProperty.call(diagnostic, 'data')) {
+        return true;
+      }
+
+      const issue = (diagnostic as Diagnostic & { data: Issue<CodeIssueData> }).data;
+      if (!issue || uri.scheme !== 'file') {
+        return true;
+      }
+
+      return !isSnykCodeIssueInlineIgnoredInFile(issue);
+    });
+
+    next(uri, filteredDiagnostics);
   };
 }

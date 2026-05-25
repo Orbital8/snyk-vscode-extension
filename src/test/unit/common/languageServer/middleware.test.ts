@@ -1,4 +1,5 @@
 import assert from 'assert';
+import fs from 'fs';
 import sinon from 'sinon';
 import {
   DEFAULT_ISSUE_VIEW_OPTIONS,
@@ -24,6 +25,7 @@ import { defaultFeaturesConfigurationStub } from '../../mocks/configuration.mock
 import { ShowIssueDetailTopicParams, LsScanProduct, SnykURIAction } from '../../../../snyk/common/languageServer/types';
 import { Subject } from 'rxjs';
 import { LoggerMockFailOnErrors } from '../../mocks/logger.mock';
+import { makeMockCodeIssue } from '../../mocks/issue.mock';
 
 suite('Language Server: Middleware', () => {
   let configuration: IConfiguration;
@@ -204,5 +206,134 @@ suite('Language Server: Middleware', () => {
       product,
       issueId,
     });
+  });
+
+  test('handleDiagnostics filters inline-ignored Snyk Code diagnostics before they reach VS Code', () => {
+    const issue = makeMockCodeIssue({
+      filePath: '/repo/test.js',
+      title: 'Use of Hardcoded Credentials',
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 0 },
+      },
+      additionalData: { rows: [1, 1] },
+    });
+    sinon
+      .stub(fs, 'readFileSync')
+      .withArgs(issue.filePath, 'utf8')
+      .returns('const a = 1;\npassword = "mock" // snyk:ignore:Use of Hardcoded Credentials\n');
+
+    const middleware = new LanguageClientMiddleware(
+      new LoggerMockFailOnErrors(),
+      {} as IConfiguration,
+      {} as User,
+      new Subject<ShowIssueDetailTopicParams>(),
+      {} as IUriAdapter,
+      {} as IVSCodeCommands,
+    );
+    const next = sinon.fake();
+
+    middleware.handleDiagnostics?.(
+      {
+        fsPath: issue.filePath,
+        scheme: 'file',
+      } as unknown as import('../../../../snyk/common/vscode/types').Uri,
+      [
+        {
+          source: LsScanProduct.Code,
+          data: issue,
+        } as unknown as import('../../../../snyk/common/vscode/types').Diagnostic,
+      ],
+      next,
+    );
+
+    sinon.assert.calledOnce(next);
+    assert.deepStrictEqual(next.firstCall.args[1], []);
+  });
+
+  test('handleDiagnostics leaves non-Code diagnostics untouched', () => {
+    const diagnostic = {
+      source: LsScanProduct.OpenSource,
+    } as unknown as import('../../../../snyk/common/vscode/types').Diagnostic;
+
+    const middleware = new LanguageClientMiddleware(
+      new LoggerMockFailOnErrors(),
+      {} as IConfiguration,
+      {} as User,
+      new Subject<ShowIssueDetailTopicParams>(),
+      {} as IUriAdapter,
+      {} as IVSCodeCommands,
+    );
+    const next = sinon.fake();
+
+    middleware.handleDiagnostics?.(
+      {
+        fsPath: '/repo/package.json',
+        scheme: 'file',
+      } as unknown as import('../../../../snyk/common/vscode/types').Uri,
+      [diagnostic],
+      next,
+    );
+
+    sinon.assert.calledOnce(next);
+    assert.deepStrictEqual(next.firstCall.args[1], [diagnostic]);
+  });
+
+  test('handleDiagnostics only filters the issue on the exact commented line when consecutive lines both have issues', () => {
+    const ignoredIssue = makeMockCodeIssue({
+      id: 'ignored-issue',
+      filePath: '/repo/test.cs',
+      title: 'Use of Hardcoded Credentials',
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+    });
+    const visibleIssue = makeMockCodeIssue({
+      id: 'visible-issue',
+      filePath: '/repo/test.cs',
+      title: 'Use of Hardcoded Credentials',
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 0 },
+      },
+    });
+
+    sinon.stub(fs, 'readFileSync').withArgs('/repo/test.cs', 'utf8').returns(
+      'public const string NewPassword = "NewPassword"; // snyk:ignore:Use of Hardcoded Credentials\n' +
+        'public const string SharedSecret = "SharedSecret";\n',
+    );
+
+    const middleware = new LanguageClientMiddleware(
+      new LoggerMockFailOnErrors(),
+      {} as IConfiguration,
+      {} as User,
+      new Subject<ShowIssueDetailTopicParams>(),
+      {} as IUriAdapter,
+      {} as IVSCodeCommands,
+    );
+    const next = sinon.fake();
+
+    middleware.handleDiagnostics?.(
+      {
+        fsPath: '/repo/test.cs',
+        scheme: 'file',
+      } as unknown as import('../../../../snyk/common/vscode/types').Uri,
+      [
+        {
+          source: LsScanProduct.Code,
+          data: ignoredIssue,
+        } as unknown as import('../../../../snyk/common/vscode/types').Diagnostic,
+        {
+          source: LsScanProduct.Code,
+          data: visibleIssue,
+        } as unknown as import('../../../../snyk/common/vscode/types').Diagnostic,
+      ],
+      next,
+    );
+
+    sinon.assert.calledOnce(next);
+    assert.strictEqual(next.firstCall.args[1].length, 1);
+    assert.strictEqual(next.firstCall.args[1][0].data.id, 'visible-issue');
   });
 });

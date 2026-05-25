@@ -5,11 +5,26 @@ import {
   IGNORE_ISSUE_BASE_COMMENT_TEXT,
   IGNORE_ISSUE_REASON_TIP,
 } from '../constants/analysis';
+import { buildSnykCodeInlineIgnoreComment } from './inlineIgnore';
 
-export const ignoreIssueCommentText = (issueId: string, isFileIgnore?: boolean): string => {
+export const ignoreIssueCommentText = ({
+  issueTitle,
+  ruleId,
+  isFileIgnore,
+}: {
+  issueTitle?: string;
+  ruleId?: string;
+  isFileIgnore?: boolean;
+}): string => {
+  if (!isFileIgnore && issueTitle) {
+    return buildSnykCodeInlineIgnoreComment(issueTitle);
+  }
+
   const snykComment = isFileIgnore ? FILE_IGNORE_ISSUE_BASE_COMMENT_TEXT : IGNORE_ISSUE_BASE_COMMENT_TEXT;
-  return `${snykComment} ${issueId}: ${IGNORE_ISSUE_REASON_TIP}`;
+  return `${snykComment} ${ruleId}: ${IGNORE_ISSUE_REASON_TIP}`;
 };
+
+export const getInlineIgnoreCommentTitle = (title: string): string => title.split(':')[0].trim();
 
 export const getAbsoluteMarkerFilePath = (
   workspace: IVSCodeWorkspace,

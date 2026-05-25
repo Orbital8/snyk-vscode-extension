@@ -1,4 +1,5 @@
 export const IGNORE_ISSUE_BASE_COMMENT_TEXT = 'deepcode ignore';
+export const SNYK_CODE_IGNORE_ISSUE_BASE_COMMENT_TEXT = 'snyk:ignore:';
 
 export const FILE_IGNORE_ISSUE_BASE_COMMENT_TEXT = `file ${IGNORE_ISSUE_BASE_COMMENT_TEXT}`;
 

@@ -136,6 +136,7 @@ function ignoreIssue(lineOnly: boolean) {
       ...getSuggestionPosition(suggestion),
       message: suggestion.message,
       rule: suggestion.rule,
+      title: suggestion.title,
       id: suggestion.id,
       severity: suggestion.severity,
       lineOnly: lineOnly,

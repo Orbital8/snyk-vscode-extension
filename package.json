@@ -1,8 +1,8 @@
 {
   "name": "snyk-vulnerability-scanner",
   "//": "Changing display name requires change in general.ts",
-  "displayName": "Snyk Security",
-  "version": "0.0.0",
+  "displayName": "Snyk Security (inline comment ignores)",
+  "version": "2.31.100",
   "description": "Easily find and fix issues in your code, open source dependencies, infrastructure as code configurations with fast and accurate scans.",
   "icon": "media/images/readme/snyk_extension_icon.png",
   "publisher": "snyk-security",
@@ -14,6 +14,7 @@
   "bugs": {
     "url": "https://support.snyk.io/"
   },
+  "packageManager": "pnpm@10.33.4",
   "engines": {
     "vscode": "^1.76.0"
   },
@@ -569,17 +570,17 @@
   },
   "scripts": {
     "vscode:prepublish": "tsc -p ./ && sass media --no-source-map",
-    "build": "npm run vscode:prepublish",
+    "build": "pnpm run vscode:prepublish",
     "clean": "rm -rf ./out",
-    "rebuild": "npm run clean && npm run build",
+    "rebuild": "pnpm run clean && pnpm run build",
     "watch": "tsc -watch -p ./",
     "watch-resources": "sass media --no-source-map --watch",
-    "watch-all": "concurrently --kill-others 'npm run watch' 'npm run watch-resources'",
-    "pretest": "npm run rebuild",
+    "watch-all": "concurrently --kill-others 'pnpm run watch' 'pnpm run watch-resources'",
+    "pretest": "pnpm run rebuild",
     "test:unit:single": "mocha --ui tdd --require ts-node/register",
-    "test:unit": "npm run rebuild && mocha --ui tdd -c 'out/test/unit/**/*.test.js'",
-    "test:unit:watch": "npm run rebuild && mocha --ui tdd -w -c 'out/test/unit/**/*.test.js'",
-    "test:integration": "npm run rebuild && node ./out/test/integration/runTest.js",
+    "test:unit": "pnpm run rebuild && mocha --ui tdd -c 'out/test/unit/**/*.test.js'",
+    "test:unit:watch": "pnpm run rebuild && mocha --ui tdd -w -c 'out/test/unit/**/*.test.js'",
+    "test:integration": "pnpm run rebuild && node ./out/test/integration/runTest.js",
     "lint": "npx eslint \"src/**/*.ts\"",
     "lint:fix": "npx eslint --fix \"src/**/*.ts\"",
     "vscode:uninstall": "node ./out/uninstall",
@@ -636,12 +637,13 @@
     "request-light": "^0.8.0",
     "rxjs": "^7.8.1",
     "string-argv": "^0.3.2",
-    "uuid": "^8.3.2",
+    "uuid": "^11.1.1",
     "validate-npm-package-name": "^3.0.0",
     "vscode-languageclient": "8.1.0",
     "vscode-languageserver-textdocument": "^1.0.10"
   },
   "overrides": {
+    "@types/minimatch": "5.1.2",
     "vscode-languageclient": {
       "minimatch": "==5.1.9"
     }

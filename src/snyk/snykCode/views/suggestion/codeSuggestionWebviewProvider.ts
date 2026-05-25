@@ -239,7 +239,7 @@ export class CodeSuggestionWebviewProvider
         }
 
         case 'ignoreIssue': {
-          const { lineOnly, rule, uri, cols, rows } = message.args;
+          const { lineOnly, rule, title, uri, cols, rows } = message.args;
           const vscodeUri = vscode.Uri.file(uri);
           const range = IssueUtils.createVsCodeRangeFromRange(rows, cols, this.languages);
           await vscode.commands.executeCommand(SNYK_IGNORE_ISSUE_COMMAND, {
@@ -248,7 +248,8 @@ export class CodeSuggestionWebviewProvider
               message: message.args.message,
               range,
             },
-            ruleId: rule,
+            ruleId: lineOnly ? undefined : rule,
+            issueTitle: lineOnly ? title : undefined,
             isFileIgnore: !lineOnly,
           });
           this.panel?.dispose();

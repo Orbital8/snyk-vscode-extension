@@ -82,7 +82,7 @@ import { OssVulnerabilityCountProvider } from './snykOss/providers/ossVulnerabil
 import OssIssueTreeProvider from './snykOss/providers/ossVulnerabilityTreeProvider';
 import { OssVulnerabilityCountService } from './snykOss/services/vulnerabilityCount/ossVulnerabilityCountService';
 import { FeatureFlagService } from './common/services/featureFlagService';
-import { DiagnosticsIssueProvider } from './common/services/diagnosticsService';
+import { CodeDiagnosticsIssueProvider, DiagnosticsIssueProvider } from './common/services/diagnosticsService';
 import {
   CodeIssueData,
   IacIssueData,
@@ -269,7 +269,7 @@ class SnykExtension extends SnykLib implements IExtension {
       new UriAdapter(),
       new MarkdownStringAdapter(),
       vsCodeCommands,
-      new DiagnosticsIssueProvider(),
+      new CodeDiagnosticsIssueProvider(),
       this.treeViewProviderService,
     );
 
@@ -294,7 +294,7 @@ class SnykExtension extends SnykLib implements IExtension {
       this.workspaceTrust,
       this.languageServer,
       vsCodeLanguages,
-      new DiagnosticsIssueProvider<CodeIssueData>(),
+      new CodeDiagnosticsIssueProvider<CodeIssueData>(),
       Logger,
       this.folderConfigs,
     );

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import { Issue, ScanProduct } from '../languageServer/types';
+import { CodeIssueData, Issue, ScanProduct } from '../languageServer/types';
 import { productToLsProduct } from './mappings';
+import { isSnykCodeIssueInlineIgnoredInFile } from '../../snykCode/utils/inlineIgnore';
 
 // This is a workaround until the LanguageClient package adds data to the Diagnostic type
 // according to https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic
@@ -33,5 +34,16 @@ export class DiagnosticsIssueProvider<T> implements IDiagnosticsIssueProvider<T>
       );
     });
     return filteredDiagnostics.map(diagnostic => diagnostic.data);
+  }
+}
+
+export class CodeDiagnosticsIssueProvider<T> extends DiagnosticsIssueProvider<T> {
+  override getIssuesFromDiagnostics(product: ScanProduct): Issue<T>[] {
+    const issues = super.getIssuesFromDiagnostics(product);
+    if (product !== ScanProduct.Code) {
+      return issues;
+    }
+
+    return issues.filter(issue => !isSnykCodeIssueInlineIgnoredInFile(issue as Issue<CodeIssueData>));
   }
 }

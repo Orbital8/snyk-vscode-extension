@@ -19,14 +19,25 @@ jobs:
       - name: Fetch sources
         uses: actions/checkout@v2
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
         # Naming convention for the preview version means we can only release one preview per hour
       - name: Patch to preview version
         id: preview
         run: |
-          VERSION=$(npm run -s patch-preview)
+          VERSION=$(pnpm run -s patch-preview)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         env:
           SNYK_VSCE_AMPLITUDE_EXPERIMENT_API_KEY: ${{ secrets.SNYK_VSCE_AMPLITUDE_EXPERIMENT_API_KEY }}
@@ -39,7 +50,7 @@ jobs:
         run: vsce publish -p ${{ secrets.MARKETPLACE_TOKEN }}
 
       - name: Publish to OpenVSX Marketplace
-        run: npx ovsx publish -i snyk-vulnerability-scanner-preview-${{ steps.preview.outputs.version }}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
+        run: pnpm dlx ovsx publish -i snyk-vulnerability-scanner-preview-${{ steps.preview.outputs.version }}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
 
       - name: Upload to S3
         env:

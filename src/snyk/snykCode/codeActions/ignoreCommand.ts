@@ -2,7 +2,11 @@ import _ from 'lodash';
 import * as vscode from 'vscode';
 import { VSCODE_ADD_COMMENT_COMMAND } from '../../common/constants/commands';
 import { COMMAND_DEBOUNCE_INTERVAL } from '../../common/constants/general';
-import { FILE_IGNORE_ISSUE_BASE_COMMENT_TEXT, IGNORE_ISSUE_BASE_COMMENT_TEXT } from '../constants/analysis';
+import {
+  FILE_IGNORE_ISSUE_BASE_COMMENT_TEXT,
+  IGNORE_ISSUE_BASE_COMMENT_TEXT,
+  SNYK_CODE_IGNORE_ISSUE_BASE_COMMENT_TEXT,
+} from '../constants/analysis';
 import { ignoreIssueCommentText } from '../utils/analysisUtils';
 
 export class IgnoreCommand {
@@ -11,6 +15,7 @@ export class IgnoreCommand {
       uri,
       matchedIssue,
       ruleId,
+      issueTitle,
       isFileIgnore,
     }: {
       uri?: vscode.Uri;
@@ -18,10 +23,11 @@ export class IgnoreCommand {
         message: string;
         range: vscode.Range;
       };
-      ruleId: string;
+      ruleId?: string;
+      issueTitle?: string;
       isFileIgnore?: boolean;
     }): Promise<void> => {
-      const issueText: string = ignoreIssueCommentText(ruleId, isFileIgnore);
+      const issueText: string = ignoreIssueCommentText({ issueTitle, ruleId, isFileIgnore });
       const editor: vscode.TextEditor | undefined =
         (uri &&
           (await vscode.window.showTextDocument(uri, {
@@ -48,7 +54,10 @@ export class IgnoreCommand {
         // 1) prevLine doesn't include any dcignore line
         // 2) prevLine is a dcignore comment
         // 3) prevLine is a file dcignore comment
-        if (prevLine.includes(IGNORE_ISSUE_BASE_COMMENT_TEXT)) {
+        if (
+          prevLine.includes(IGNORE_ISSUE_BASE_COMMENT_TEXT) ||
+          (!isFileIgnore && prevLine.includes(SNYK_CODE_IGNORE_ISSUE_BASE_COMMENT_TEXT))
+        ) {
           if (prevLine.includes(FILE_IGNORE_ISSUE_BASE_COMMENT_TEXT)) {
             // case number 3
             if (isFileIgnore) snykCommentPostition = new vscode.Position(prevLineRange.start.line, prevLine.length);

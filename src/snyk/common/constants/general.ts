@@ -1,5 +1,5 @@
 // Changing this requires changing display name in package.json.
-export const SNYK_NAME = 'Snyk Security';
+export const SNYK_NAME = 'Snyk Security (inline comment ignores)';
 export const SNYK_TOKEN_KEY = 'snyk.token';
 const SNYK_UNIQUE_EXTENSION_NAME = 'Snyk Vulnerability Scanner';
 export const SNYK_PUBLISHER = 'snyk-security';

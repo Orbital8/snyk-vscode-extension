@@ -40,7 +40,7 @@ We can instruct you on what to add to the CHANGELOG.md, so please ask.
 
 ## Run extension and debug
 
-Clone the repository, then run `npm install && npm run build` in the directory.
+Clone the repository, then run `pnpm install && pnpm run build` in the directory.
 
 - Open repository directory in VS Code and press `F5` to run extension in a new VS Code window.
 - This allows extension debugging within VS Code.
@@ -58,21 +58,21 @@ Code changes require extension reload when run in debug.
 ## Watching changes
 
 - When run in debug, VS Code runs watch for TS files automatically for you.
-- If not in debug, run `npm run watch-all` to track changes in both TS and SCSS files.
-  - If you want to track changes to TS files only, use `npm run watch`.
-  - If you want to track changes to SCSS files only, use `npm run watch-resources`.
+- If not in debug, run `pnpm run watch-all` to track changes in both TS and SCSS files.
+  - If you want to track changes to TS files only, use `pnpm run watch`.
+  - If you want to track changes to SCSS files only, use `pnpm run watch-resources`.
 
 ## Run tests and debug
 
 - Unit tests
-  - Run `npm run test:unit` for a single execution, `npm run test:unit:watch` to watch for changes.
+  - Run `pnpm run test:unit` for a single execution, `pnpm run test:unit:watch` to watch for changes.
   - Make sure to re-run the command to pick up new files, if new `**.test.ts` is added.
 
 - Integration tests
-  - Run `npm run test:integration`.
+  - Run `pnpm run test:integration`.
 
 - Run Lint
-  - npm `npm run lint`
+  - `pnpm run lint`
 
 You can debug tests via VS Code debugger, selecting "Extension Unit Tests" or "Extension Integration Tests" respectively.
 

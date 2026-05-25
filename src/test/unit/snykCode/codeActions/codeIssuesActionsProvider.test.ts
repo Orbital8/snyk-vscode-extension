@@ -11,6 +11,7 @@ import { IssueUtils } from '../../../../snyk/snykCode/utils/issueUtils';
 import { IConfiguration } from '../../../../snyk/common/configuration/configuration';
 import { IFolderConfigs } from '../../../../snyk/common/configuration/folderConfigs';
 import { FEATURE_FLAGS } from '../../../../snyk/common/constants/featureFlags';
+import { makeMockCodeIssue } from '../../mocks/issue.mock';
 
 suite('Snyk Code actions provider', () => {
   let issuesActionsProvider: SnykCodeActionsProvider;
@@ -25,12 +26,13 @@ suite('Snyk Code actions provider', () => {
     codeResults.set('folderName', {
       isSuccess: true,
       issues: [
-        {
+        makeMockCodeIssue({
           filePath: '//folderName//test.js',
+          title: 'Mock Code issue',
           additionalData: {
             rule: 'some-rule',
           },
-        } as unknown as Issue<CodeIssueData>,
+        }) as Issue<CodeIssueData>,
       ],
     });
 
@@ -135,5 +137,45 @@ suite('Snyk Code actions provider', () => {
     strictEqual(codeActions[0].command?.command, SNYK_OPEN_ISSUE_COMMAND);
     strictEqual(codeActions[1].command?.command, SNYK_IGNORE_ISSUE_COMMAND);
     strictEqual(codeActions[2].command?.command, SNYK_IGNORE_ISSUE_COMMAND);
+  });
+
+  test('Uses the issue title for issue-level ignores and keeps file ignore legacy args', () => {
+    const document = {
+      uri: {
+        fsPath: '//folderName//test.js',
+      },
+    } as unknown as TextDocument;
+
+    const codeActions = issuesActionsProvider.provideCodeActions(document, {} as Range, {} as CodeActionContext);
+
+    strictEqual(codeActions?.[1].command?.arguments?.[0].ruleId, 'some-rule');
+    strictEqual(codeActions?.[1].command?.arguments?.[0].issueTitle, undefined);
+    strictEqual(codeActions?.[2].command?.arguments?.[0].ruleId, undefined);
+    strictEqual(codeActions?.[2].command?.arguments?.[0].issueTitle, 'Mock Code issue');
+  });
+
+  test('Uses the UI-visible title for issue-level ignore comments when raw title contains details', () => {
+    codeResults.set('folderName', {
+      isSuccess: true,
+      issues: [
+        makeMockCodeIssue({
+          filePath: '//folderName//test.js',
+          title: 'Use of Hardcoded Credentials: Hardcoded password detected',
+          additionalData: {
+            rule: 'some-rule',
+          },
+        }) as Issue<CodeIssueData>,
+      ],
+    });
+
+    const document = {
+      uri: {
+        fsPath: '//folderName//test.js',
+      },
+    } as unknown as TextDocument;
+
+    const codeActions = issuesActionsProvider.provideCodeActions(document, {} as Range, {} as CodeActionContext);
+
+    strictEqual(codeActions?.[2].command?.arguments?.[0].issueTitle, 'Use of Hardcoded Credentials');
   });
 });
